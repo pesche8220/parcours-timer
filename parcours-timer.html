@@ -1,0 +1,779 @@
+<title>Parcours Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: Werkzeug mit Übersicht, Editor mit Übungsauswahl, und Vollbild-Anzeige, deren Texte sich maximal in ihre Felder einpassen. */
+:root{
+  --bg:#EEF2F0; --surface:#FFFFFF; --fg:#14201B; --muted:#56665F; --line:#D5DED9;
+  --accent:#1D6B57; --accent-fg:#FFFFFF; --accent-soft:#D7EBE4; --danger:#B3361F;
+  --work:#C8402A; --rest:#1C679E; --pause:#93600F; --prep:#33423C; --done:#1D6B57; --on:#FFFFFF;
+  --b1:#1D6B57; --b2:#C2571A; --b3:#2C62A8; --b4:#7A4BB0; --b5:#9A6E0C; --b6:#B23A62;
+  --font-display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --font-body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#1E2826; --surface:#2B3632; --fg:#F0F5F2; --muted:#AEBDB6; --line:#52635C;
+  --accent:#5CC4A4; --accent-fg:#132019; --accent-soft:#304D43; --danger:#F07A60;
+  --b1:#5CC4A4; --b2:#F08A4B; --b3:#74A7EC; --b4:#B690E8; --b5:#E2B64C; --b6:#EC7FA2; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#1E2826; --surface:#2B3632; --fg:#F0F5F2; --muted:#AEBDB6; --line:#52635C;
+  --accent:#5CC4A4; --accent-fg:#132019; --accent-soft:#304D43; --danger:#F07A60;
+  --b1:#5CC4A4; --b2:#F08A4B; --b3:#74A7EC; --b4:#B690E8; --b5:#E2B64C; --b6:#EC7FA2; color-scheme:dark }
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.45}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;letter-spacing:.01em;line-height:1.05;margin:0;text-wrap:balance}
+h1{font-size:2.4rem} h2{font-size:1.5rem}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.muted{color:var(--muted)}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:.6rem 1rem;font-weight:700;min-height:44px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger)}
+.btn.danger.armed{background:var(--danger);color:#fff;border-color:var(--danger)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.ico svg{display:block;width:100%;height:100%}
+.ico{display:inline-flex;flex:none}
+
+/* Übersicht */
+.head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+.quick{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.quick .time{font-family:var(--font-display);font-size:2.6rem;font-weight:600;font-variant-numeric:tabular-nums;min-width:4.2ch;text-align:center}
+.list{display:flex;flex-direction:column;gap:10px}
+.wo{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px;border-radius:12px;background:var(--surface);border:1.5px solid var(--line)}
+.wo .info{min-width:0;flex:1 1 220px}
+.wo h3{font-size:1.35rem}
+.empty{padding:20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+
+/* Editor */
+label,.lbl{font-size:.85rem;font-weight:700;color:var(--muted);display:block;margin-bottom:4px}
+input[type=text]{width:100%;box-sizing:border-box;font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:.6rem .7rem}
+.title-in{width:100%;box-sizing:border-box;font:700 2.2rem/1.1 var(--font-display);color:var(--fg);background:transparent;border:0;border-bottom:2px solid var(--line);padding:.1rem 0 .25rem;border-radius:0}
+.title-in::placeholder{color:var(--muted);opacity:.6}
+.title-in:focus{outline:none;border-bottom-color:var(--accent)}
+.block{border-left:7px solid var(--bc)}
+.block-head{display:flex;gap:10px;align-items:center}
+.block-head .title-in{font-size:1.8rem;color:var(--bc);flex:1;min-width:0}
+.block-head .title-in:focus{border-bottom-color:var(--bc)}
+button.block{width:100%;text-align:left;font:inherit;color:var(--fg);gap:8px}
+button.block:hover{border-color:var(--bc)}
+.bh{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bname{font:700 1.8rem/1.05 var(--font-display);color:var(--bc);min-width:0;overflow-wrap:anywhere}
+.bmeta{font-size:.92rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bmeta b{color:var(--fg)}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.85rem;font-weight:700;background:var(--bg);border-radius:999px;padding:.2rem .6rem .2rem .35rem}
+.pill .ico{width:18px;height:18px;color:var(--bc)}
+.edit-tag{font-size:.8rem;font-weight:700;color:var(--bc);border:1.5px solid var(--bc);border-radius:999px;padding:.2rem .7rem;flex:none}
+.collapse{border:1.5px solid var(--line);background:transparent;border-radius:10px;min-height:44px;padding:0 .8rem;font-weight:700;flex:none}
+.sel .ico{color:var(--bc)!important}
+.wtitle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;background:transparent;padding:0;text-align:left;font:inherit;color:var(--fg)}
+.wtitle .bname{font-size:2.4rem;color:var(--fg)}
+.wtitle .edit-tag{--bc:var(--accent)}
+.wtitle-edit{display:flex;gap:10px;align-items:center}
+.tset{display:flex;flex-direction:column;gap:14px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{min-width:58px;min-height:44px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;font:600 1.2rem var(--font-display);font-variant-numeric:tabular-nums;padding:0 .7rem}
+.seg button[aria-pressed="true"]{background:var(--bc);border-color:var(--bc);color:var(--surface)}
+.seg .more{font:700 .85rem var(--font-body);color:var(--muted)}
+.seg .more[aria-expanded="true"]{border-color:var(--bc);color:var(--fg)}
+.tset .step{max-width:240px;margin-top:6px}
+.pickbtn{background:var(--bc);border-color:var(--bc);color:var(--surface)}
+.sel{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:n}
+.sel li{display:flex;align-items:center;gap:10px;padding:6px 6px 6px 10px;background:var(--bg);border-radius:10px;counter-increment:n}
+.sel li::before{content:counter(n);font:600 1rem var(--font-display);color:var(--muted);width:1.4em;text-align:right;font-variant-numeric:tabular-nums}
+.sel .ico{width:28px;height:28px;color:var(--accent)}
+.sel .nm{flex:1;min-width:0;font-weight:700;overflow-wrap:anywhere}
+.sel button{border:0;background:transparent;width:38px;height:38px;border-radius:8px;font-size:1.05rem;color:var(--muted)}
+.sel button:hover{background:var(--surface)}
+.sel-empty{padding:14px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:640px){.fields{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.step{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg)}
+.step button{border:0;background:transparent;color:var(--fg);width:44px;min-height:44px;font-size:1.3rem;font-weight:700}
+.step input{width:100%;min-width:0;border:0;background:transparent;color:var(--fg);text-align:center;font:600 1.3rem var(--font-display);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.step input::-webkit-inner-spin-button,.step input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.check{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--fg);font-weight:400}
+.check input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.sum{font-size:.9rem;color:var(--muted)}
+.sticky{position:sticky;bottom:0;background:var(--bg);padding-block:12px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}
+.hint{font-size:.85rem;color:var(--muted)}
+
+/* Übungsauswahl */
+#picker{position:fixed;inset:0;background:var(--bg);z-index:20;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.pk-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.pk-head h2{font-size:1.4rem}
+.pk-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+.pk-inner{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.cat h3{display:flex;align-items:center;gap:8px;font-size:1.2rem;margin-bottom:10px}
+.cat h3 .ico{width:26px;height:26px;color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:.45rem .9rem .45rem .6rem;font-weight:700;min-height:44px}
+.chip .ico{width:22px;height:22px;color:var(--muted)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.chip.on .ico{color:var(--accent-fg)}
+.chip .num{font:700 .8rem var(--font-body);background:var(--accent-fg);color:var(--accent);border-radius:999px;min-width:1.5em;height:1.5em;display:inline-flex;align-items:center;justify-content:center;padding-inline:.3em}
+.chip .own{font-size:.7rem;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em}
+.newex{display:flex;flex-direction:column;gap:10px}
+.newex .row input{flex:1 1 200px}
+.catpick{display:flex;flex-wrap:wrap;gap:6px}
+.catpick button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:.35rem .6rem;font-size:.85rem;font-weight:700;min-height:40px}
+.catpick button .ico{width:20px;height:20px}
+.catpick button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.err{color:var(--danger);font-size:.85rem;font-weight:700}
+
+/* Anzeige: alles maximal gross */
+#run{position:fixed;inset:0;background:var(--seg,var(--prep));color:var(--on);display:flex;flex-direction:column;gap:1vh;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 14px calc(10px + env(safe-area-inset-bottom,0px));transition:background-color .35s ease;z-index:10;user-select:none;-webkit-user-select:none}
+.r-top{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:clamp(.9rem,3.2vmin,1.8rem);line-height:1.1}
+.r-top span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-top #rInfo{opacity:.85;text-align:right}
+.r-namebox{flex:0 0 27%;min-height:0;display:flex;align-items:center;gap:2.5vmin}
+.r-namebox .ico{color:var(--on)}
+.fitwrap{flex:1;min-width:0;height:100%;display:flex;align-items:center}
+.r-name{width:100%;font-family:var(--font-display);font-weight:700;line-height:.95;overflow-wrap:normal;word-break:normal;hyphens:none}
+.r-timebox{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.r-time{font-family:var(--font-display);font-weight:700;font-variant-numeric:tabular-nums;line-height:.86;white-space:nowrap;text-align:center}
+.r-nextbox{flex:0 0 13%;min-height:0;display:flex;align-items:center}
+.r-next{width:100%;font-family:var(--font-display);font-weight:600;line-height:1;display:flex;align-items:center;gap:.3em;white-space:nowrap}
+.r-next .ico{width:.9em;height:.9em;opacity:.9}
+.r-next .pre{opacity:.75}
+.r-bar{flex:none;height:10px;background:rgba(255,255,255,.25);border-radius:5px;overflow:hidden}
+.r-bar i{display:block;height:100%;background:var(--on);width:0}
+.r-ctrl{flex:none;display:grid;grid-template-columns:1fr 1.8fr 1fr 1fr 1fr;gap:10px}
+.r-ctrl[hidden]{display:none}
+.r-ctrl button{border:0;border-radius:12px;background:rgba(255,255,255,.2);color:var(--on);font-weight:700;font-size:clamp(1rem,2.8vmin,1.5rem);min-height:clamp(56px,10vmin,90px)}
+.r-ctrl .big{background:var(--on);color:var(--seg,var(--prep));font-size:clamp(1.2rem,3.4vmin,1.9rem)}
+.r-ctrl .armed{background:#fff;color:var(--danger)}
+@media (prefers-reduced-motion:reduce){#run{transition:none}}
+</style>
+
+<!-- Übersicht -->
+<div id="home" class="wrap">
+  <div class="head">
+    <div>
+      <div class="eyebrow">Workout-Timer · Prototyp 2</div>
+      <h1>Parcours Timer</h1>
+    </div>
+    <button class="btn primary" id="newBtn">+ Neues Workout</button>
+  </div>
+
+  <section class="panel" aria-labelledby="qt">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="qt">Schnell-Countdown</h2>
+      <span class="hint">Zeit einstellen und los</span>
+    </div>
+    <div class="quick">
+      <div class="step" style="width:150px"><button data-q="-60" aria-label="eine Minute weniger">−</button><span class="muted" style="align-self:center;font-size:.8rem">min</span><button data-q="60" aria-label="eine Minute mehr">+</button></div>
+      <div class="time" id="qTime">5:00</div>
+      <div class="step" style="width:150px"><button data-q="-5" aria-label="5 Sekunden weniger">−</button><span class="muted" style="align-self:center;font-size:.8rem">5 s</span><button data-q="5" aria-label="5 Sekunden mehr">+</button></div>
+      <button class="btn primary" id="qStart">Start</button>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px" aria-labelledby="wl">
+    <h2 id="wl">Meine Workouts</h2>
+    <div class="list" id="list"></div>
+    <p class="hint" id="storeHint"></p>
+  </section>
+</div>
+
+<!-- Editor -->
+<div id="editor" hidden>
+  <div class="wrap" style="padding-bottom:0">
+    <div class="row" style="justify-content:space-between">
+      <button class="btn ghost" id="edBack">← Zurück</button>
+      <span class="sum" id="edSum"></span>
+    </div>
+    <div>
+      <span class="lbl">Workout</span>
+      <button type="button" class="wtitle" id="edTitleBtn"><span class="bname" id="edTitleTxt"></span><span class="edit-tag">Bearbeiten</span></button>
+      <div class="wtitle-edit" id="edTitleEdit" hidden>
+        <input type="text" id="edName" class="title-in" placeholder="Name des Workouts" aria-label="Name des Workouts" style="flex:1;min-width:0">
+        <button type="button" class="collapse" id="edTitleOk">Fertig</button>
+      </div>
+    </div>
+    <div id="blocks" style="display:flex;flex-direction:column;gap:16px"></div>
+    <button class="btn" id="addBlock">+ Block hinzufügen</button>
+    <p class="hint">Die Pause zwischen den Übungen dient zum Stationswechsel. Die Rundenpause kommt nach jeder Runde und vor dem nächsten Block.</p>
+  </div>
+  <div class="wrap" style="padding-block:0">
+    <div class="sticky">
+      <button class="btn primary" id="edSave">Speichern</button>
+      <button class="btn" id="edStart">Speichern &amp; starten</button>
+      <button class="btn danger" id="edDel" style="margin-left:auto">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Übungsauswahl -->
+<div id="picker" hidden>
+  <div class="pk-head">
+    <div style="min-width:0"><div class="eyebrow" id="pkCount"></div><h2 id="pkTitle">Übungen wählen</h2></div>
+    <button class="btn primary" id="pkDone">Fertig</button>
+  </div>
+  <div class="pk-body">
+    <div class="pk-inner">
+      <section class="panel newex" aria-labelledby="neT">
+        <h3 id="neT" style="font-size:1.2rem">Eigene Übung erstellen</h3>
+        <div class="row">
+          <input type="text" id="neName" placeholder="Name, z.B. Sandsack tragen" maxlength="40">
+          <button class="btn primary" id="neAdd">Hinzufügen</button>
+        </div>
+        <div><span class="lbl">Symbol</span><div class="catpick" id="neCats"></div></div>
+        <div class="err" id="neErr" hidden></div>
+      </section>
+      <div id="pkCats" style="display:flex;flex-direction:column;gap:22px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Anzeige -->
+<div id="run" hidden lang="de">
+  <div class="r-top"><span id="rPhase"></span><span id="rInfo"></span></div>
+  <div class="r-namebox" id="nameBox"><span class="ico" id="rIco"></span><div class="fitwrap" id="nameWrap"><div class="r-name" id="rName"></div></div></div>
+  <div class="r-timebox" id="timeBox"><div class="r-time" id="rTime"></div></div>
+  <div class="r-nextbox" id="nextBox"><div class="r-next" id="rNext"></div></div>
+  <div class="r-bar"><i id="rBar"></i></div>
+  <div class="r-ctrl" id="rCtrl">
+    <button id="rPrev" aria-label="Zurück">⏮</button>
+    <button id="rMain" class="big">Pause</button>
+    <button id="rSkip" aria-label="Überspringen">⏭</button>
+    <button id="rFull" aria-label="Vollbild">⛶</button>
+    <button id="rStop">Ende</button>
+  </div>
+</div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const KEY = 'parcours.workouts.v1', QKEY = 'parcours.quick.v1', CKEY = 'parcours.custom.v1';
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clampInt = (v, min, max) => { v = parseInt(v, 10); if (isNaN(v)) v = min; return Math.max(min, Math.min(max, v)); };
+
+/* ---------- Symbole ---------- */
+const S = 'fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS = {
+  body: `<svg viewBox="0 0 48 48" ${S}><circle cx="24" cy="9" r="5"/><path d="M24 14v16M12 20h24M24 30l-8 14M24 30l8 14"/></svg>`,
+  core: `<svg viewBox="0 0 48 48" ${S}><circle cx="8" cy="21" r="4.5"/><path d="M13 24l29 9M14 24.5V37M42 33l2 4M4 40h40"/></svg>`,
+  kettlebell: `<svg viewBox="0 0 48 48" ${S}><path d="M16 21v-6a8 8 0 0 1 16 0v6"/><circle cx="24" cy="31" r="12"/></svg>`,
+  dumbbell: `<svg viewBox="0 0 48 48" ${S}><path d="M15 24h18"/><rect x="8" y="14" width="7" height="20" rx="2"/><rect x="33" y="14" width="7" height="20" rx="2"/><path d="M4 19v10M44 19v10"/></svg>`,
+  band: `<svg viewBox="0 0 48 48" ${S}><path d="M6 9h10M32 9h10"/><path d="M11 9q0 32 13 32t13-32"/></svg>`,
+  pullup: `<svg viewBox="0 0 48 48" ${S}><path d="M4 5h40M16 5l3 16M32 5l-3 16M19 21h10M24 21v14M24 35l-4 9M24 35l4 9"/><circle cx="24" cy="14" r="4"/></svg>`,
+  cardio: `<svg viewBox="0 0 48 48" ${S}><circle cx="31" cy="8" r="4.5"/><path d="M28 14l-6 14M27 17l8 6M27 17l-10 1M22 28l8 7-2 9M22 28l-8 6-6-2"/></svg>`,
+  mobility: `<svg viewBox="0 0 48 48" ${S}><circle cx="24" cy="10" r="4.5"/><path d="M24 16v16M24 20L13 9M24 20l11-11M24 32l-6 12M24 32l6 12"/><path d="M8 30a16 16 0 0 0 6 8M40 30a16 16 0 0 1-6 8"/></svg>`
+};
+const CATS = [
+  { id: 'body', name: 'Körpergewicht' }, { id: 'core', name: 'Core' }, { id: 'kettlebell', name: 'Kettlebell' },
+  { id: 'dumbbell', name: 'Hantel' }, { id: 'band', name: 'Band' }, { id: 'pullup', name: 'Klimmzugstange' },
+  { id: 'cardio', name: 'Cardio' }, { id: 'mobility', name: 'Mobilität' }
+];
+const icon = cat => `<span class="ico" aria-hidden="true">${ICONS[cat] || ICONS.body}</span>`;
+
+const BUILTIN = {
+  body: ['Kniebeugen','Liegestütze','Burpees','Ausfallschritte','Hampelmann','Sprungkniebeugen','Dips','Wandsitzen','Strecksprünge','Bear Crawl'],
+  core: ['Plank','Seitstütz','Crunches','Russian Twist','Beinheben','Superman','Hollow Hold','Mountain Climbers','Schulter-Taps'],
+  kettlebell: ['KB Swing','Goblet Squat','KB Rudern','Clean & Press','KB Kreuzheben','Turkish Get-up'],
+  dumbbell: ['Bizeps-Curls','Schulterdrücken','Rudern vorgebeugt','Thruster','Farmer Walk'],
+  band: ['Band Rudern','Pull-Aparts','Band Squats','Monster Walk','Band Brustpresse'],
+  pullup: ['Klimmzüge','Hängen','Knieheben hängend','Negativ-Klimmzüge','Australian Pull-ups'],
+  cardio: ['Seilspringen','Kniehebelauf','Sprint','Skipping','Anfersen','Pendellauf'],
+  mobility: ['Armkreisen','Hüftkreisen','Inchworm','World’s Greatest Stretch','Katze-Kuh','Beinpendel']
+};
+
+/* ---------- Speicher ---------- */
+let storageOk = true;
+function load(k){ try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch(e){ storageOk = false; return null; } }
+function store(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ storageOk = false; return false; } }
+
+let custom = load(CKEY); if (!Array.isArray(custom)) custom = [];
+function library(){
+  const all = [];
+  CATS.forEach(c => (BUILTIN[c.id] || []).forEach(n => all.push({ name: n, cat: c.id, own: false })));
+  custom.forEach(x => all.push({ name: x.name, cat: x.cat, own: true }));
+  return all;
+}
+const findLib = name => library().find(x => x.name.toLowerCase() === String(name).trim().toLowerCase());
+
+function sample(){
+  const it = names => names.map(n => ({ name: n, cat: (findLib(n) || {}).cat || 'body' }));
+  return [{ id: uid(), name: 'Bootcamp Garten (Beispiel)', blocks: [
+    { id: uid(), name: 'Warm-up', items: it(['Hampelmann','Armkreisen','Kniehebelauf','Ausfallschritte','Hüftkreisen','Inchworm','Skipping','Schulter-Taps']), work: 30, rest: 10, rounds: 2, roundRest: 60, roundRestOpen: false },
+    { id: uid(), name: 'Parcours', items: it(['Kniebeugen','KB Swing','Burpees','Klimmzüge','Band Rudern','Plank']), work: 40, rest: 15, rounds: 3, roundRest: 120, roundRestOpen: true }
+  ]}];
+}
+function migrate(ws){
+  ws.forEach(w => w.blocks.forEach(b => {
+    if (!Array.isArray(b.items)){
+      b.items = String(b.exercises || '').split('\n').map(s => s.trim()).filter(Boolean).map(n => ({ name: n, cat: (findLib(n) || {}).cat || 'body' }));
+      delete b.exercises;
+    }
+  }));
+  return ws;
+}
+let workouts = load(KEY);
+if (!Array.isArray(workouts)) { workouts = sample(); store(KEY, workouts); } else { migrate(workouts); store(KEY, workouts); }
+let quick = clampInt(load(QKEY) ?? 300, 5, 5999);
+
+/* ---------- Ablauf berechnen ---------- */
+function buildSegments(w){
+  const segs = [];
+  const blocks = w.blocks.filter(b => b.rounds > 0 && b.items.length);
+  blocks.forEach((b, bi) => {
+    for (let r = 1; r <= b.rounds; r++){
+      b.items.forEach((ex, i) => {
+        segs.push({ type: 'work', label: ex.name, cat: ex.cat, dur: b.work, block: b.name, round: r, rounds: b.rounds });
+        if (i < b.items.length - 1 && b.rest > 0) segs.push({ type: 'rest', dur: b.rest, block: b.name, round: r, rounds: b.rounds });
+      });
+      const lastOverall = bi === blocks.length - 1 && r === b.rounds;
+      if (!lastOverall && (b.roundRestOpen || b.roundRest > 0)){
+        segs.push({ type: 'pause', label: r < b.rounds ? 'Rundenpause' : 'Blockpause', dur: b.roundRest, open: !!b.roundRestOpen, block: b.name, round: r, rounds: b.rounds });
+      }
+    }
+  });
+  if (segs.length) segs.unshift({ type: 'prep', dur: 10, block: blocks[0].name, round: 1, rounds: blocks[0].rounds });
+  return segs;
+}
+function totalSec(w){ return buildSegments(w).reduce((a, s) => a + (s.open ? 0 : s.dur), 0); }
+function fmt(sec){ sec = Math.max(0, Math.round(sec)); const m = Math.floor(sec / 60), s = sec % 60; return m + ':' + String(s).padStart(2, '0'); }
+function fmtRun(sec){ const c = Math.max(0, Math.ceil(sec)); return c >= 60 ? fmt(c) : String(c); }
+
+/* ---------- Ansichten ---------- */
+function show(id){ ['home','editor','run'].forEach(v => $('#' + v).hidden = v !== id); $('#picker').hidden = true; window.scrollTo(0, 0); }
+
+function renderHome(){
+  $('#qTime').textContent = fmt(quick);
+  const list = $('#list');
+  if (!workouts.length){
+    list.innerHTML = '<div class="empty">Noch keine Workouts. Mit „+ Neues Workout“ legst du das erste an.</div>';
+  } else {
+    list.innerHTML = workouts.map(w => {
+      const n = w.blocks.reduce((a, b) => a + b.items.length, 0);
+      const open = w.blocks.some(b => b.roundRestOpen);
+      return `<div class="wo"><div class="info"><h3>${esc(w.name || 'Ohne Namen')}</h3>
+        <div class="muted" style="font-size:.9rem">${w.blocks.length} ${w.blocks.length === 1 ? 'Block' : 'Blöcke'} · ${n} Übungen · ca. ${Math.round(totalSec(w) / 60)} min${open ? ' + offene Pausen' : ''}</div></div>
+        <div class="row"><button class="btn" data-edit="${w.id}">Bearbeiten</button><button class="btn primary" data-start="${w.id}" ${n ? '' : 'disabled'}>Start</button></div></div>`;
+    }).join('');
+  }
+  $('#storeHint').textContent = storageOk
+    ? 'Gespeichert wird im Browser dieses Geräts. Auf einem anderen Gerät sind die Workouts noch nicht sichtbar.'
+    : 'Dieser Browser erlaubt gerade kein Speichern. Änderungen gehen beim Schliessen verloren.';
+}
+
+$('#list').addEventListener('click', e => {
+  const s = e.target.closest('[data-start]'), ed = e.target.closest('[data-edit]');
+  if (s){ const w = workouts.find(x => x.id === s.dataset.start); if (w) startRun(buildSegments(w), w.name); }
+  if (ed) openEditor(ed.dataset.edit);
+});
+document.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => {
+  quick = clampInt(quick + parseInt(b.dataset.q, 10), 5, 5999); store(QKEY, quick); $('#qTime').textContent = fmt(quick);
+}));
+$('#qStart').addEventListener('click', () => startRun([
+  { type: 'prep', dur: 5, block: 'Countdown', round: 1, rounds: 1, nextOverride: 'Countdown' },
+  { type: 'work', label: 'Countdown', cat: 'cardio', dur: quick, block: 'Countdown', round: 1, rounds: 1, noIcon: true }
+], 'Countdown'));
+$('#newBtn').addEventListener('click', () => openEditor(null));
+
+/* ---------- Editor ---------- */
+let draft = null;
+const newBlock = name => ({ id: uid(), name, items: [], work: 40, rest: 15, rounds: 3, roundRest: 90, roundRestOpen: false });
+const FIELDS = [
+  { f: 'work', label: 'Übung (s)', step: 5, min: 5, max: 3600 },
+  { f: 'rest', label: 'Pause (s)', step: 5, min: 0, max: 3600 },
+  { f: 'rounds', label: 'Runden', step: 1, min: 1, max: 50 },
+  { f: 'roundRest', label: 'Rundenpause (s)', step: 15, min: 0, max: 3600 }
+];
+const fieldDef = f => FIELDS.find(F => F.f === f);
+
+function openEditor(id){
+  const src = id ? workouts.find(w => w.id === id) : null;
+  draft = src ? JSON.parse(JSON.stringify(src)) : { id: uid(), name: '', blocks: [newBlock('Warm-up'), newBlock('Parcours')], isNew: true };
+  openBi = src ? -1 : 0; moreOpen = {};
+  $('#edName').value = draft.name;
+  setTitleEdit(!!draft.isNew);
+  $('#edDel').hidden = !!draft.isNew;
+  disarm($('#edDel'));
+  renderBlocks(); show('editor');
+}
+let openBi = -1, moreOpen = {};
+const PRESETS = { work: [20, 30, 40, 45, 60], rest: [0, 10, 15, 20, 30], rounds: [1, 2, 3, 4, 5], roundRest: [30, 60, 90, 120, 180] };
+const chipTxt = (f, v) => f === 'rounds' ? String(v) : (v >= 60 ? fmt(v) : v + ' s');
+function setTitleEdit(on){
+  $('#edTitleTxt').textContent = draft.name.trim() || 'Neues Workout';
+  $('#edTitleBtn').hidden = on; $('#edTitleEdit').hidden = !on;
+  if (on) setTimeout(() => $('#edName').focus(), 0);
+}
+$('#edTitleBtn').addEventListener('click', () => setTitleEdit(true));
+$('#edTitleOk').addEventListener('click', () => setTitleEdit(false));
+$('#edName').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); setTitleEdit(false); } });
+const bcol = bi => `var(--b${(bi % 6) + 1})`;
+const secTxt = s => s >= 60 ? fmt(s) + ' min' : s + ' s';
+function blockMeta(b){
+  return `<b>${b.items.length}</b> Übungen · <b>${secTxt(b.work)}</b> Übung · <b>${secTxt(b.rest)}</b> Pause · <b>${b.rounds}</b> ${b.rounds === 1 ? 'Runde' : 'Runden'} · Rundenpause <b>${b.roundRestOpen ? 'offen' : secTxt(b.roundRest)}</b>`;
+}
+function renderBlocks(){
+  $('#blocks').innerHTML = draft.blocks.map((b, bi) => bi !== openBi ? `
+    <button type="button" class="panel block" style="--bc:${bcol(bi)}" data-open="${bi}" aria-label="${esc(b.name || 'Block ' + (bi + 1))} bearbeiten">
+      <span class="bh"><span class="bname">${esc(b.name || 'Block ' + (bi + 1))}</span><span class="edit-tag">Bearbeiten</span></span>
+      <span class="bmeta">${blockMeta(b)}</span>
+      ${b.items.length ? `<span class="pills">${b.items.map(it => `<span class="pill">${icon(it.cat)}${esc(it.name)}</span>`).join('')}</span>` : '<span class="bmeta">Noch keine Übungen ausgewählt.</span>'}
+    </button>` : `
+    <section class="panel block" style="--bc:${bcol(bi)}" aria-label="Block ${bi + 1}">
+      <div class="block-head">
+        <input type="text" class="title-in" id="bn-${b.id}" data-bi="${bi}" data-f="name" value="${esc(b.name)}" placeholder="Name des Blocks" aria-label="Name von Block ${bi + 1}">
+        <button type="button" class="collapse" data-close="1">Fertig ▴</button>
+      </div>
+      <div>
+        <span class="lbl">Übungen in dieser Reihenfolge</span>
+        ${b.items.length ? `<ol class="sel">${b.items.map((it, i) => `<li>${icon(it.cat)}<span class="nm">${esc(it.name)}</span>
+          <button type="button" data-mv="-1" data-bi="${bi}" data-i="${i}" aria-label="${esc(it.name)} nach oben" ${i === 0 ? 'disabled style="opacity:.3"' : ''}>↑</button>
+          <button type="button" data-mv="1" data-bi="${bi}" data-i="${i}" aria-label="${esc(it.name)} nach unten" ${i === b.items.length - 1 ? 'disabled style="opacity:.3"' : ''}>↓</button>
+          <button type="button" data-rm="${i}" data-bi="${bi}" aria-label="${esc(it.name)} entfernen">✕</button></li>`).join('')}</ol>`
+          : `<div class="sel-empty">Noch keine Übungen ausgewählt.</div>`}
+        <button class="btn pickbtn" style="margin-top:10px" data-pick="${bi}">Übungen auswählen</button>
+      </div>
+      <div class="tset">
+        ${FIELDS.map(F => {
+          const key = bi + '-' + F.f, isOpenRR = F.f === 'roundRest' && b.roundRestOpen;
+          const pres = PRESETS[F.f], val = b[F.f];
+          const inPres = pres.includes(val);
+          const chips = pres.map(v => `<button type="button" data-set="${v}" data-bi="${bi}" data-f="${F.f}" aria-pressed="${!isOpenRR && v === val}">${chipTxt(F.f, v)}</button>`).join('')
+            + (!inPres && !isOpenRR ? `<button type="button" data-set="${val}" data-bi="${bi}" data-f="${F.f}" aria-pressed="true">${chipTxt(F.f, val)}</button>` : '')
+            + (F.f === 'roundRest' ? `<button type="button" data-rropen="${bi}" aria-pressed="${isOpenRR}" style="font-family:var(--font-body);font-size:.9rem;font-weight:700">offen</button>` : '')
+            + `<button type="button" class="more" data-more="${key}" aria-expanded="${!!moreOpen[key]}">Andere…</button>`;
+          return `<div><span class="lbl">${F.label}${F.f === 'roundRest' && isOpenRR ? ' · weiter erst mit Tipp' : ''}</span><div class="seg">${chips}</div>
+            ${moreOpen[key] ? `<div class="step"><button type="button" data-bump="-${F.step}" data-bi="${bi}" data-f="${F.f}" aria-label="${F.label} verringern">−</button>
+            <input type="number" inputmode="numeric" id="${F.f}-${b.id}" data-bi="${bi}" data-f="${F.f}" value="${val}" min="${F.min}" max="${F.max}" aria-label="${F.label}">
+            <button type="button" data-bump="${F.step}" data-bi="${bi}" data-f="${F.f}" aria-label="${F.label} erhöhen">+</button></div>` : ''}</div>`;
+        }).join('')}
+      </div>
+      ${draft.blocks.length > 1 ? `<div><button type="button" class="btn ghost danger" data-delblock="${bi}">Block entfernen</button></div>` : ''}
+    </section>`).join('');
+  updateSum();
+}
+function updateSum(){ $('#edSum').textContent = 'Dauer ca. ' + Math.round(totalSec(draft) / 60) + ' min' + (draft.blocks.some(b => b.roundRestOpen) ? ' + offene Pausen' : ''); }
+
+$('#blocks').addEventListener('input', e => {
+  const el = e.target, bi = el.dataset.bi, f = el.dataset.f; if (bi == null || !f) return;
+  const b = draft.blocks[bi];
+  if (f === 'roundRestOpen') b.roundRestOpen = el.checked;
+  else if (f === 'name') b.name = el.value;
+  else { const F = fieldDef(f); if (el.value !== '') b[f] = clampInt(el.value, F.min, F.max); }
+  updateSum();
+});
+$('#blocks').addEventListener('change', e => {
+  const el = e.target, F = el.dataset.f && fieldDef(el.dataset.f);
+  if (F){ const b = draft.blocks[el.dataset.bi]; b[F.f] = clampInt(el.value, F.min, F.max); if (F.f === 'roundRest') b.roundRestOpen = false; renderBlocks(); }
+});
+$('#blocks').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const b = t.dataset.bi != null ? draft.blocks[t.dataset.bi] : null;
+  if (t.dataset.open != null){
+    openBi = +t.dataset.open; renderBlocks();
+    const el = $('#blocks').children[openBi]; if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    return;
+  }
+  if (t.dataset.close){ openBi = -1; renderBlocks(); return; }
+  if (t.dataset.set != null){
+    const F = fieldDef(t.dataset.f); b[F.f] = clampInt(t.dataset.set, F.min, F.max);
+    if (F.f === 'roundRest') b.roundRestOpen = false;
+    renderBlocks(); return;
+  }
+  if (t.dataset.rropen != null){ b.roundRestOpen = true; renderBlocks(); return; }
+  if (t.dataset.more){ moreOpen[t.dataset.more] = !moreOpen[t.dataset.more]; renderBlocks(); return; }
+  if (t.dataset.bump){
+    const F = fieldDef(t.dataset.f);
+    b[F.f] = clampInt(b[F.f] + parseInt(t.dataset.bump, 10), F.min, F.max);
+    if (F.f === 'roundRest') b.roundRestOpen = false;
+    const id = t.dataset.f + '-' + b.id; renderBlocks();
+    const inp = document.getElementById(id); if (inp) inp.parentElement.querySelector(`[data-bump="${t.dataset.bump}"]`).focus();
+  } else if (t.dataset.delblock != null){
+    if (!t.classList.contains('armed')){ arm(t, 'Wirklich entfernen?', () => {}); return; }
+    draft.blocks.splice(+t.dataset.delblock, 1); openBi = -1; renderBlocks();
+  }
+  else if (t.dataset.mv){
+    const i = +t.dataset.i, j = i + +t.dataset.mv;
+    if (j >= 0 && j < b.items.length){ [b.items[i], b.items[j]] = [b.items[j], b.items[i]]; renderBlocks(); }
+  } else if (t.dataset.rm != null){ b.items.splice(+t.dataset.rm, 1); renderBlocks(); }
+  else if (t.dataset.pick != null){ openPicker(+t.dataset.pick); }
+});
+$('#edName').addEventListener('input', e => { draft.name = e.target.value; $('#edTitleTxt').textContent = draft.name.trim() || 'Neues Workout'; });
+$('#addBlock').addEventListener('click', () => { draft.blocks.push(newBlock('Block ' + (draft.blocks.length + 1))); openBi = draft.blocks.length - 1; renderBlocks(); });
+
+function commit(){
+  draft.name = draft.name.trim() || 'Workout ' + new Date().toLocaleDateString('de-CH');
+  const clean = { id: draft.id, name: draft.name, blocks: draft.blocks };
+  const i = workouts.findIndex(w => w.id === draft.id);
+  if (i >= 0) workouts[i] = clean; else workouts.unshift(clean);
+  store(KEY, workouts); draft.isNew = false; return clean;
+}
+$('#edSave').addEventListener('click', () => { commit(); renderHome(); show('home'); });
+$('#edStart').addEventListener('click', () => {
+  const w = commit(); renderHome();
+  const segs = buildSegments(w);
+  if (segs.length) startRun(segs, w.name); else show('home');
+});
+$('#edBack').addEventListener('click', () => { renderHome(); show('home'); });
+
+function arm(btn, label, action){
+  if (btn.classList.contains('armed')){ disarm(btn); action(); return; }
+  btn.dataset.orig = btn.dataset.orig || btn.textContent;
+  btn.classList.add('armed'); btn.textContent = label;
+  clearTimeout(btn._t); btn._t = setTimeout(() => disarm(btn), 3000);
+}
+function disarm(btn){ btn.classList.remove('armed'); if (btn.dataset.orig) btn.textContent = btn.dataset.orig; clearTimeout(btn._t); }
+$('#edDel').addEventListener('click', e => arm(e.currentTarget, 'Wirklich löschen?', () => {
+  workouts = workouts.filter(w => w.id !== draft.id); store(KEY, workouts); renderHome(); show('home');
+}));
+
+/* ---------- Übungsauswahl ---------- */
+let pickBi = 0, newCat = 'body';
+function openPicker(bi){
+  pickBi = bi; $('#neName').value = ''; $('#neErr').hidden = true;
+  renderPicker(); $('#picker').hidden = false; $('.pk-body').scrollTop = 0;
+}
+function renderPicker(){
+  const b = draft.blocks[pickBi];
+  $('#pkTitle').textContent = 'Übungen für ' + (b.name || 'Block ' + (pickBi + 1));
+  $('#pkCount').textContent = b.items.length + ' ausgewählt · Antippen fügt hinzu oder entfernt';
+  $('#neCats').innerHTML = CATS.map(c => `<button type="button" data-ncat="${c.id}" aria-pressed="${c.id === newCat}">${icon(c.id)}${c.name}</button>`).join('');
+  const lib = library();
+  $('#pkCats').innerHTML = CATS.map(c => {
+    const ex = lib.filter(x => x.cat === c.id);
+    if (!ex.length) return '';
+    return `<section class="cat"><h3>${icon(c.id)}${c.name}</h3><div class="chips">${ex.map(x => {
+      const pos = b.items.findIndex(it => it.name === x.name);
+      return `<button type="button" class="chip${pos >= 0 ? ' on' : ''}" data-ex="${esc(x.name)}" data-cat="${x.cat}" aria-pressed="${pos >= 0}">
+        ${pos >= 0 ? `<span class="num">${pos + 1}</span>` : icon(x.cat)}${esc(x.name)}${x.own ? '<span class="own">eigen</span>' : ''}</button>`;
+    }).join('')}</div></section>`;
+  }).join('');
+}
+$('#pkCats').addEventListener('click', e => {
+  const c = e.target.closest('[data-ex]'); if (!c) return;
+  const b = draft.blocks[pickBi], name = c.dataset.ex;
+  const pos = b.items.findIndex(it => it.name === name);
+  if (pos >= 0) b.items.splice(pos, 1); else b.items.push({ name, cat: c.dataset.cat });
+  const y = $('.pk-body').scrollTop; renderPicker(); $('.pk-body').scrollTop = y;
+});
+$('#neCats').addEventListener('click', e => { const c = e.target.closest('[data-ncat]'); if (!c) return; newCat = c.dataset.ncat; renderPicker(); });
+function addCustom(){
+  const name = $('#neName').value.trim(), err = $('#neErr');
+  if (!name){ err.textContent = 'Gib der Übung zuerst einen Namen.'; err.hidden = false; return; }
+  const b = draft.blocks[pickBi], existing = findLib(name);
+  if (existing){
+    if (!b.items.some(it => it.name === existing.name)) b.items.push({ name: existing.name, cat: existing.cat });
+  } else {
+    custom.push({ name, cat: newCat }); store(CKEY, custom);
+    b.items.push({ name, cat: newCat });
+  }
+  $('#neName').value = ''; err.hidden = true; renderPicker();
+}
+$('#neAdd').addEventListener('click', addCustom);
+$('#neName').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); addCustom(); } });
+$('#pkDone').addEventListener('click', () => { $('#picker').hidden = true; renderBlocks(); });
+
+/* ---------- Ton ---------- */
+let actx = null;
+function ensureAudio(){ try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch(e){ actx = null; } }
+function beep(freq, dur, delay = 0){
+  if (!actx) return;
+  try {
+    const t = actx.currentTime + delay, o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'square'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.01);
+    g.gain.setValueAtTime(0.35, t + dur - 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+  } catch(e){}
+}
+const sounds = {
+  count: () => beep(880, 0.12),
+  work: () => beep(1320, 0.5),
+  rest: () => { beep(660, 0.2); beep(660, 0.2, 0.28); },
+  done: () => { beep(1320, 0.2); beep(1320, 0.2, 0.3); beep(1760, 0.6, 0.6); }
+};
+
+/* ---------- Bildschirm wach halten ---------- */
+let wake = null;
+async function requestWake(){ try { if ('wakeLock' in navigator && !document.hidden) wake = await navigator.wakeLock.request('screen'); } catch(e){ wake = null; } }
+function releaseWake(){ try { wake && wake.release(); } catch(e){} wake = null; }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && run) requestWake(); });
+
+/* ---------- Text maximal einpassen ---------- */
+function fit(el, box, maxPx){
+  const W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  let lo = 8, hi = Math.max(10, Math.min(maxPx || 4000, H * 1.3));
+  for (let k = 0; k < 20 && hi - lo > 1; k++){
+    const m = Math.floor((lo + hi) / 2);
+    el.style.fontSize = m + 'px';
+    if (el.scrollWidth <= W + 1 && el.offsetHeight <= H + 1) lo = m; else hi = m;
+  }
+  el.style.fontSize = lo + 'px';
+}
+
+/* ---------- Timer-Engine: rechnet mit Zeitstempeln, nicht mit Ticks ---------- */
+const COLORS = { work: 'var(--work)', rest: 'var(--rest)', pause: 'var(--pause)', prep: 'var(--prep)', done: 'var(--done)' };
+let run = null, loop = null, ctrlTimer = null, timePattern = '';
+
+function startRun(segs, title){
+  if (!segs.length) return;
+  ensureAudio();
+  run = { segs, title, idx: 0, start: Date.now(), paused: false, left: 0, lastBeep: null, began: Date.now(), finished: false };
+  show('run'); requestWake(); enter(0, Date.now(), false);
+  clearInterval(loop); loop = setInterval(tick, 100);
+}
+const cur = () => run.segs[run.idx];
+function nextWork(from){ for (let i = from + 1; i < run.segs.length; i++) if (run.segs[i].type === 'work') return run.segs[i]; return null; }
+function left(){ const s = cur(); return run.paused ? run.left : s.dur - (Date.now() - run.start) / 1000; }
+
+function enter(i, startMs, withSound = true){
+  run.idx = i; run.start = startMs; run.paused = false; run.lastBeep = null;
+  const s = cur();
+  if (withSound){ if (s.type === 'work') sounds.work(); else if (s.type !== 'prep') sounds.rest(); }
+  disarm($('#rStop'));
+  setContent(); showCtrl(false);
+}
+function advance(startMs){ if (run.idx + 1 >= run.segs.length) return finish(); enter(run.idx + 1, startMs); }
+function tick(){
+  if (!run || run.finished) return;
+  const s = cur();
+  if (!run.paused && !s.open){
+    const l = left();
+    if (l <= 0){ advance(run.start + s.dur * 1000); return; }
+    const c = Math.ceil(l);
+    if (c <= 3 && c >= 1 && run.lastBeep !== c){ run.lastBeep = c; sounds.count(); }
+  }
+  drawTime();
+}
+
+/* Inhalt pro Abschnitt: oben steht, was du jetzt machst oder gleich machst. */
+function setContent(){
+  const s = cur(), nx = nextWork(run.idx);
+  let phase, main, mainCat, nextHtml;
+  const nxHtml = (pre, x) => x ? `<span class="pre">${pre}</span>${x.noIcon ? '' : icon(x.cat)}<span>${esc(x.label)}</span>` : '';
+  if (s.type === 'work'){
+    phase = 'Übung'; main = s.label; mainCat = s.noIcon ? null : s.cat;
+    nextHtml = nx ? nxHtml('Danach:', nx) : '<span class="pre">Letzte Übung</span>';
+  } else if (s.type === 'rest'){
+    phase = 'Pause · Station wechseln'; main = nx ? nx.label : 'Pause'; mainCat = nx && nx.cat;
+    const after = nx ? nextWork(run.segs.indexOf(nx)) : null;
+    nextHtml = nxHtml('Danach:', after) || '<span class="pre">Letzte Übung</span>';
+  } else if (s.type === 'pause'){
+    phase = s.open ? s.label + ' · weiter mit Tipp' : s.label; main = s.label; mainCat = null;
+    nextHtml = nxHtml('Gleich:', nx);
+  } else {
+    phase = 'Bereit machen'; main = nx ? nx.label : 'Los geht’s'; mainCat = nx && !nx.noIcon ? nx.cat : null;
+    nextHtml = '<span class="pre">Startet gleich</span>';
+  }
+  $('#rPhase').textContent = phase;
+  $('#rInfo').textContent = s.rounds > 1 ? `${s.block} · Runde ${s.round}/${s.rounds}` : s.block;
+  $('#rName').textContent = main;
+  $('#rIco').innerHTML = mainCat ? ICONS[mainCat] : '';
+  $('#rIco').hidden = !mainCat;
+  $('#rNext').innerHTML = nextHtml;
+  $('#run').style.setProperty('--seg', COLORS[s.type]);
+  updateMain();
+  layout();
+}
+function layout(){
+  if (!run) return;
+  const nb = $('#nameBox'), ico = $('#rIco');
+  if (!ico.hidden){ const sz = Math.min(nb.clientHeight * .9, nb.clientWidth * .24); ico.style.width = ico.style.height = sz + 'px'; }
+  fit($('#rName'), $('#nameWrap'));
+  fit($('#rNext'), $('#nextBox'));
+  timePattern = ''; drawTime();
+}
+function drawTime(){
+  if (!run) return;
+  const s = cur(); let txt;
+  if (run.finished) txt = fmt((run.endedAt - run.began) / 1000);
+  else if (s.open){ txt = fmt((Date.now() - run.start) / 1000); $('#rBar').style.width = '0%'; }
+  else { const l = left(); txt = fmtRun(l); $('#rBar').style.width = Math.min(100, Math.max(0, (1 - l / s.dur) * 100)) + '%'; }
+  const el = $('#rTime');
+  if (el.textContent !== txt) el.textContent = txt;
+  const pat = txt.replace(/\d/g, '8');
+  if (pat !== timePattern){ timePattern = pat; el.textContent = pat; fit(el, $('#timeBox')); el.textContent = txt; }
+}
+function updateMain(){
+  const m = $('#rMain');
+  if (run.finished) m.textContent = 'Fertig';
+  else if (cur().open || run.paused) m.textContent = 'Weiter';
+  else m.textContent = 'Pause';
+}
+
+/* Steuerung blendet sich während des Laufens aus; ein Tipp holt sie zurück. */
+function canHide(){ return run && !run.finished && !run.paused && !cur().open; }
+function showCtrl(sticky){
+  clearTimeout(ctrlTimer);
+  const c = $('#rCtrl'), wasHidden = c.hidden;
+  c.hidden = false;
+  if (wasHidden) layout();
+  if (!sticky && canHide()) ctrlTimer = setTimeout(hideCtrl, 4000);
+}
+function hideCtrl(){ if (!canHide()) return; $('#rCtrl').hidden = true; layout(); }
+$('#run').addEventListener('click', e => {
+  if (!run || e.target.closest('#rCtrl')) return;
+  if ($('#rCtrl').hidden) showCtrl(false); else hideCtrl();
+});
+$('#rCtrl').addEventListener('click', () => { if (run && !$('#rCtrl').hidden) showCtrl(false); });
+
+function togglePause(){
+  if (!run || run.finished) return;
+  const s = cur(); ensureAudio();
+  if (s.open){ advance(Date.now()); return; }
+  if (run.paused){ run.start = Date.now() - (s.dur - run.left) * 1000; run.paused = false; }
+  else { run.left = left(); run.paused = true; }
+  updateMain(); showCtrl(false); drawTime();
+}
+function finish(){
+  run.finished = true; run.endedAt = Date.now(); clearInterval(loop); clearTimeout(ctrlTimer); sounds.done(); releaseWake();
+  $('#run').style.setProperty('--seg', COLORS.done);
+  $('#rPhase').textContent = 'Workout beendet';
+  $('#rInfo').textContent = run.title;
+  $('#rName').textContent = 'Geschafft!';
+  $('#rIco').hidden = true;
+  $('#rNext').innerHTML = '<span class="pre">Gesamtdauer</span>';
+  $('#rBar').style.width = '100%';
+  $('#rCtrl').hidden = false;
+  updateMain(); layout();
+}
+function exitRun(){
+  clearInterval(loop); clearTimeout(ctrlTimer); releaseWake(); run = null;
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch(e){}
+  renderHome(); show('home');
+}
+
+$('#rMain').addEventListener('click', () => { if (run && run.finished) return exitRun(); togglePause(); });
+$('#rSkip').addEventListener('click', () => { if (run && !run.finished){ ensureAudio(); advance(Date.now()); } });
+$('#rPrev').addEventListener('click', () => {
+  if (!run || run.finished) return;
+  const s = cur();
+  const elapsed = run.paused && !s.open ? s.dur - run.left : (Date.now() - run.start) / 1000;
+  enter(elapsed > 3 || run.idx === 0 ? run.idx : run.idx - 1, Date.now());
+});
+$('#rStop').addEventListener('click', e => { if (run && run.finished) return exitRun(); arm(e.currentTarget, 'Sicher?', exitRun); });
+$('#rFull').addEventListener('click', () => {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else { const p = document.documentElement.requestFullscreen?.(); if (p) p.catch(() => { $('#rFull').disabled = true; $('#rFull').style.opacity = .4; }); }
+  } catch(e){ $('#rFull').disabled = true; $('#rFull').style.opacity = .4; }
+});
+document.addEventListener('keydown', e => {
+  if (!run || e.target.matches('input')) return;
+  if (e.code === 'Space'){ e.preventDefault(); $('#rMain').click(); }
+  if (e.code === 'ArrowRight') $('#rSkip').click();
+  if (e.code === 'ArrowLeft') $('#rPrev').click();
+});
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(layout, 120); });
+document.addEventListener('fullscreenchange', () => setTimeout(layout, 150));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => layout());
+
+renderHome();
+})();
+</script>

@@ -1,0 +1,5 @@
+﻿# Lokale Einstellungen von Claude Code
+.claude/settings.local.json
+# Windows/OneDrive
+Thumbs.db
+desktop.ini
