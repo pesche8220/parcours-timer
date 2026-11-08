@@ -51,7 +51,8 @@ export class Scanner {
     if (!Scanner.supported()) throw new Error('nocam');
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { facingMode: { ideal: this.facing }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      // 1080p, wenn die Kamera es kann: kleine Codes (Handy auf Abstand) werden so besser erkannt
+      video: { facingMode: { ideal: this.facing }, width: { ideal: 1920 }, height: { ideal: 1080 } }
     });
     const v = this.video;
     v.muted = true; v.playsInline = true; v.setAttribute('playsinline', '');
@@ -83,13 +84,14 @@ export class Scanner {
           .then(r => { this.busy = false; if (r && r.length) this.hit(r[0].rawValue); })
           .catch(() => { this.busy = false; });
       } else {
-        const scale = Math.min(1, 900 / Math.max(v.videoWidth, v.videoHeight));
+        // Drei Varianten im Wechsel (im Test mit verrauschten, kleinen, schrägen Codes am robustesten):
+        // 900 px scharf · 900 px leicht weichgezeichnet (glättet Rauschen) · volle Auflösung (kleine Codes)
+        this.n = ((this.n || 0) + 1) % 3;
+        const maxSide = this.n === 2 ? 1600 : 900;
+        const scale = Math.min(1, maxSide / Math.max(v.videoWidth, v.videoHeight));
         const w = Math.round(v.videoWidth * scale), h = Math.round(v.videoHeight * scale);
-        if (this.canvas.width !== w) { this.canvas.width = w; this.canvas.height = h; }
-        // Abwechselnd mit leichtem Weichzeichner: glättet Kamerarauschen (z. B. in der Dämmerung).
-        // Im Test verbesserte das die Erkennung verrauschter Bilder deutlich.
-        this.n = (this.n || 0) + 1;
-        this.ctx2d.filter = this.n % 2 ? 'blur(1.2px)' : 'none';
+        if (this.canvas.width !== w || this.canvas.height !== h) { this.canvas.width = w; this.canvas.height = h; }
+        this.ctx2d.filter = this.n === 1 ? 'blur(1.2px)' : 'none';
         this.ctx2d.drawImage(v, 0, 0, w, h);
         this.ctx2d.filter = 'none';
         const img = this.ctx2d.getImageData(0, 0, w, h);

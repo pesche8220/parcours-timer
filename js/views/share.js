@@ -21,7 +21,8 @@ nav.register('share', {
       <div class="page narrow">
         <header class="bar"><button type="button" class="icon-btn" data-back aria-label="Zurück">${UI.back}</button><h1 class="bar-title">Per Code übergeben</h1></header>
         <h2 class="share-name">${esc(w.name)}</h2>
-        <div class="qr-box big">${qrSvg(url, { ecc: url.length > 600 ? 'L' : 'M' })}</div>
+        <div class="qr-box big">${qrSvg(url, { ecc: 'L' })}</div>
+        <p class="fine center-text">Bildschirm hell stellen und den Code ca. 20 cm vor die Kamera halten.</p>
         <ol class="howto">
           <li><b>Auf die Anzeige:</b> Dort «Als Anzeige» öffnen und den Code vor die Kamera halten. Das Workout läuft dann dort – ohne Netz, aber auch ohne Fernbedienung.</li>
           <li><b>Mit anderen teilen:</b> Mit einer normalen Handy-Kamera scannen öffnet das Workout in Parcours.</li>

@@ -455,7 +455,7 @@ body[data-view="run"] #toast.show, body[data-view="remote"] #toast.show { transf
 .cam-box.mirror video { transform: scaleX(-1); }
 .cam-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 22px; text-align: center; color: #E9E8E4; font-weight: 700; background: #0E1012; }
 .scan-frame { position: absolute; inset: 14%; border-radius: 22px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); border: 3px solid rgba(255,255,255,.9); }
-.pair-status { min-height: 1.5em; font-weight: 700; text-align: center; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.pair-status { min-height: 1.5em; margin-top: 4px; font-weight: 700; text-align: center; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .help { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-lg); padding: 4px 18px; }
 .help summary { min-height: 48px; display: flex; align-items: center; font-weight: 700; cursor: pointer; list-style: none; }
 .help summary::-webkit-details-marker { display: none; }
@@ -486,6 +486,7 @@ body[data-view="run"] #toast.show, body[data-view="remote"] #toast.show { transf
 
 /* ---------- Teilen / Empfangen ---------- */
 .share-name { font-size: 2rem; text-align: center; }
+.center-text { text-align: center; }
 .howto { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 10px; color: var(--muted); }
 .howto b { color: var(--ink); }
 .pick-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }

@@ -1,11 +1,11 @@
 // Koppeln: «Als Anzeige» (Tablet/Laptop) und «Als Fernbedienung» (Handy).
-import { $, esc } from '../util.js';
+import { $, esc, vibrate } from '../util.js';
 import { UI } from '../icons.js';
 import { link } from '../link.js';
 import { qrSvg, Scanner } from '../qr.js';
 import { parseCode, offerUrl, answerText } from '../codec.js';
 import { keepAwake } from '../wake.js';
-import { unlock } from '../sound.js';
+import { unlock, sfx } from '../sound.js';
 import { toast } from '../ui.js';
 import * as nav from '../nav.js';
 
@@ -30,7 +30,7 @@ pd.innerHTML = `
         <div class="qr-box" id="pdQr"><div class="qr-wait">Code wird erstellt …</div></div>
       </section>
       <section class="card pair-step">
-        <div class="step-head"><span class="step-num">2</span><p>Das Handy zeigt dann einen Code. Halte ihn <b>20–30 cm</b> vor die Kamera dieses Geräts, so dass er das Bild gut füllt.</p></div>
+        <div class="step-head"><span class="step-num">2</span><p>Das Handy zeigt dann einen Code. Halte ihn <b>ca. 20 cm</b> vor die Kamera dieses Geräts. Ein Piep bestätigt, dass er gelesen wurde.</p></div>
         <div class="cam-box mirror"><video id="pdVid" muted playsinline></video><div class="cam-msg" id="pdCamMsg">Kamera wird gestartet …</div></div>
         <p class="fine">Die Kamera liest nur den Code. Es wird nichts gespeichert oder gesendet.</p>
       </section>
@@ -74,6 +74,7 @@ async function pdOnCode(text) {
   if (c.kind === 'offer') { toast('Das ist ein Anzeige-Code. Scanne ihn mit dem Handy.'); return; }
   if (c.kind === 'workout') {
     pdBusy = true;
+    sfx.count();
     toast('Workout übernommen');
     nav.replace('ready', { workout: c.data });
     return;
@@ -81,6 +82,7 @@ async function pdOnCode(text) {
   if (c.kind === 'answer') {
     if (link.status !== 'waiting') return;   // Angebot noch nicht fertig: einfach weiter scannen
     pdBusy = true;
+    sfx.count();
     $('#pdStatus').textContent = 'Code gelesen. Verbinde …';
     try { await link.accept(c.data); }
     catch (e) {
@@ -143,7 +145,7 @@ pr.innerHTML = `
       <button type="button" class="btn ghost wide" id="prNoNet">${UI.qr}<span>Kein gemeinsames Netz? Workout per Code übergeben</span></button>
     </div>
     <div id="prShow" hidden>
-      <p class="lead">Fast fertig: Halte jetzt den Bildschirm deines Handys 20–30 cm vor die Kamera der Anzeige. Tipp: Bildschirm hell stellen.</p>
+      <p class="lead">Fast fertig: Halte jetzt den Bildschirm deines Handys ca. 20 cm vor die Kamera der Anzeige, bis sie piept. Tipp: Bildschirm hell stellen.</p>
       <div class="qr-box big" id="prQr"></div>
       <p class="pair-status" id="prStatus" role="status">Warte auf die Anzeige …</p>
       <button type="button" class="btn ghost wide" id="prAgain">${UI.camera}<span>Nochmal scannen</span></button>
@@ -169,11 +171,15 @@ async function prOnCode(text) {
   if (c.kind === 'workout') { prStopCam(); nav.replace('import', { workout: c.data }); return; }
   if (c.kind === 'answer') { toast('Das ist der Code eines Handys. Scanne den Code auf der Anzeige.'); return; }
   prBusy = true;
+  vibrate(40);
   await prJoin(c.data);
 }
 
 async function prJoin(offer) {
+  const parsed = parseCode(offer);           // nimmt ganze Adresse oder nur den Code
+  if (parsed && parsed.kind === 'offer') offer = parsed.data;
   $('#prScan').hidden = true; $('#prShow').hidden = false;
+  $('#prQr').hidden = false;
   $('#prQr').innerHTML = '<div class="qr-wait">Code wird erstellt …</div>';
   $('#prStatus').textContent = 'Warte auf die Anzeige …';
   try {
@@ -184,7 +190,8 @@ async function prJoin(offer) {
     prStopCam();
     prBusy = false;
     $('#prQr').innerHTML = '';
-    $('#prStatus').textContent = 'Dieser Code passt nicht. Erstelle auf der Anzeige einen neuen und scanne nochmal.';
+    $('#prQr').hidden = true;
+    $('#prStatus').textContent = 'Dieser Code passt nicht. Öffne auf der Anzeige «Als Anzeige» neu und scanne nochmal.';
   }
 }
 
