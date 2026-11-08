@@ -73,4 +73,4 @@ Kopplung mit zwei Tabs (`__pt`) inkl. Start, Steuerung, Verbindungsabbruch · Wo
 
 ## Deployment
 GitHub Pages aus Branch `main`, Ordner `/` (Root). `.nojekyll` muss vorhanden sein.
-Git und GitHub CLI liegen portabel unter `%LOCALAPPDATA%\Programs\` (nicht im PATH) – siehe README.
+Git und GitHub CLI liegen portabel unter `%LOCALAPPDATA%\Programs\` (nicht im PATH). Veröffentlichen: committen, dann `tools/publish.ps1`.
