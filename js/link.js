@@ -11,7 +11,7 @@ const OPEN_TIMEOUT = 15000;
 let pc = null, dc = null;
 let role = null;          // 'display' | 'remote'
 let status = 'idle';      // idle | waiting | connecting | open | lost | failed
-let lastRx = 0, hbTimer = null, openTimer = null;
+let lastRx = 0, hbTimer = null, openTimer = null, hostUfrag = null;
 const listeners = new Set();
 
 function emit(ev) { listeners.forEach(fn => { try { fn(ev); } catch (e) { console.error(e); } }); }
@@ -74,11 +74,13 @@ function encodeDesc(kind, sdp) {
 function decodeDesc(str) {
   const f = String(str).split('~');
   if (f.length < 6) throw new Error('code');
-  const [kind, u, p, fpb, setup, mid] = f;
+  const [head, u, p, fpb, setup, mid] = f;
+  // Antwort trägt die Sitzungskennung der Anzeige: «a.<ufrag der Anzeige>»
+  const [kind, tag = null] = head.split('.');
   const fp = [...bytesFromB64url(fpb)].map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(':');
   const c = [];
   for (let i = 6; i + 1 < f.length; i += 2) c.push({ addr: unpackAddr(f[i]), port: +f[i + 1] });
-  return { kind, u, p, fp, setup: setup === 'x' ? 'actpass' : setup === 'a' ? 'active' : 'passive', mid, c };
+  return { kind, tag, u, p, fp, setup: setup === 'x' ? 'actpass' : setup === 'a' ? 'active' : 'passive', mid, c };
 }
 
 function buildSdp(d) {
@@ -164,10 +166,13 @@ export const link = {
     reset();
     role = 'display';
     makePc();
-    await pc.setLocalDescription(await pc.createOffer());
-    await gathered(pc);
+    const myPc = pc;
+    await myPc.setLocalDescription(await myPc.createOffer());
+    await gathered(myPc);
+    if (pc !== myPc) throw new Error('abgebrochen');
+    hostUfrag = parseSdp(myPc.localDescription.sdp).u;
     setStatus('waiting');
-    return encodeDesc('o', pc.localDescription.sdp);
+    return encodeDesc('o', myPc.localDescription.sdp);
   },
 
   /** Handy: gescanntes Angebot annehmen. Liefert Antwort-Code für den QR. */
@@ -182,15 +187,19 @@ export const link = {
     await gathered(pc);
     setStatus('connecting');
     armTimeout();
-    return encodeDesc('a', pc.localDescription.sdp);
+    return encodeDesc('a.' + d.u, pc.localDescription.sdp);
   },
 
-  /** Anzeige: gescannte Antwort vom Handy übernehmen. */
+  /**
+   * Anzeige: gescannte Antwort vom Handy übernehmen.
+   * Wirft Error mit .code: 'notready' (Angebot noch nicht fertig), 'stale' (Code gehört zu einer anderen/alten Sitzung).
+   */
   async accept(code) {
     const d = decodeDesc(code);
-    if (d.kind !== 'a') throw new Error('Kein Antwortcode');
-    if (!pc || role !== 'display') throw new Error('Kein Angebot offen');
-    if (pc.signalingState !== 'have-local-offer') return; // schon übernommen
+    const fail = c => Object.assign(new Error(c), { code: c });
+    if (d.kind !== 'a') throw fail('kind');
+    if (!pc || role !== 'display' || status !== 'waiting' || pc.signalingState !== 'have-local-offer') throw fail('notready');
+    if (d.tag && d.tag !== hostUfrag) throw fail('stale');
     await pc.setRemoteDescription({ type: 'answer', sdp: buildSdp(d) });
     setStatus('connecting');
     armTimeout();

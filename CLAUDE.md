@@ -49,7 +49,12 @@ tools/make-icons.ps1  PNG-Icons erzeugen (System.Drawing)
 - Voraussetzung: gemeinsames Netz (WLAN oder Handy-Hotspot; Internet nicht nötig). Keine STUN/TURN-Server.
 - Die Anzeige ist der Chef: läuft weiter, wenn das Handy weg ist. Heartbeat alle 2 s, «getrennt» nach 7 s Funkstille.
 - Ganz ohne Netz: Workout-QR (`#w=…`) auf die Anzeige halten → läuft dort, ohne Fernbedienung.
+- Antwort-Code beginnt mit `a.<ufrag der Anzeige>`: Die Anzeige verwirft alte/fremde Antworten (sonst blockierte sie).
 - Testen ohne Kamera (zwei Browser-Tabs): `__pt.qr()` liefert den zuletzt gezeigten QR-Text, `__pt.scan(text)` simuliert einen Scan.
+  Realistischer: Inhalt von `tools/fakecam.js` in die Konsole einfügen, dann `__fake.text = '<QR-Text>'` – ersetzt die Kamera
+  durch ein schräges, unscharfes, verrauschtes Bild und testet so die ganze Scan-Kette.
+- Erkenntnis aus Tests: jsQR scheitert an starkem Pixelrauschen; der Scanner zeichnet darum jedes zweite Bild leicht weich.
+  Echte IPv4-Kandidaten (wie auf Geräten mit Kamerafreigabe) wurden über die WLAN-Adresse des Rechners erfolgreich getestet.
 
 ## Regeln für Änderungen
 - **Bei jedem Release `VERSION` in `sw.js` und `APP_VERSION` in `js/pwa.js` gleich erhöhen**, sonst sehen installierte Geräte nichts Neues.

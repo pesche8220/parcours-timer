@@ -30,7 +30,7 @@ pd.innerHTML = `
         <div class="qr-box" id="pdQr"><div class="qr-wait">Code wird erstellt …</div></div>
       </section>
       <section class="card pair-step">
-        <div class="step-head"><span class="step-num">2</span><p>Das Handy zeigt dann einen Code. Halte ihn vor die Kamera dieses Geräts.</p></div>
+        <div class="step-head"><span class="step-num">2</span><p>Das Handy zeigt dann einen Code. Halte ihn <b>20–30 cm</b> vor die Kamera dieses Geräts, so dass er das Bild gut füllt.</p></div>
         <div class="cam-box mirror"><video id="pdVid" muted playsinline></video><div class="cam-msg" id="pdCamMsg">Kamera wird gestartet …</div></div>
         <p class="fine">Die Kamera liest nur den Code. Es wird nichts gespeichert oder gesendet.</p>
       </section>
@@ -60,9 +60,12 @@ async function pdStart() {
     if (gen !== pdGen) return;
     $('#pdQr').innerHTML = qrSvg(offerUrl(code), { ecc: 'L' });
   } catch (e) {
+    if (gen !== pdGen) return;
     $('#pdQr').innerHTML = `<div class="qr-wait">Verbindung wird von diesem Browser nicht unterstützt.</div>`;
   }
 }
+
+let staleHintAt = 0;
 
 async function pdOnCode(text) {
   if (pdBusy) return;
@@ -76,10 +79,19 @@ async function pdOnCode(text) {
     return;
   }
   if (c.kind === 'answer') {
+    if (link.status !== 'waiting') return;   // Angebot noch nicht fertig: einfach weiter scannen
     pdBusy = true;
     $('#pdStatus').textContent = 'Code gelesen. Verbinde …';
     try { await link.accept(c.data); }
-    catch (e) { pdBusy = false; $('#pdStatus').textContent = 'Dieser Code passt nicht. Bitte am Handy neu scannen.'; }
+    catch (e) {
+      pdBusy = false;
+      if (e.code === 'notready') { $('#pdStatus').textContent = ''; return; }
+      // Alter Code (z. B. vom letzten Mal): nicht blockieren, nur kurz Bescheid geben
+      if (Date.now() - staleHintAt > 4000) {
+        staleHintAt = Date.now();
+        $('#pdStatus').textContent = 'Das ist ein alter Code. Scanne am Handy den Code oben neu.';
+      }
+    }
   }
 }
 
@@ -131,7 +143,7 @@ pr.innerHTML = `
       <button type="button" class="btn ghost wide" id="prNoNet">${UI.qr}<span>Kein gemeinsames Netz? Workout per Code übergeben</span></button>
     </div>
     <div id="prShow" hidden>
-      <p class="lead">Fast fertig: Halte jetzt den Bildschirm deines Handys vor die Kamera der Anzeige.</p>
+      <p class="lead">Fast fertig: Halte jetzt den Bildschirm deines Handys 20–30 cm vor die Kamera der Anzeige. Tipp: Bildschirm hell stellen.</p>
       <div class="qr-box big" id="prQr"></div>
       <p class="pair-status" id="prStatus" role="status">Warte auf die Anzeige …</p>
       <button type="button" class="btn ghost wide" id="prAgain">${UI.camera}<span>Nochmal scannen</span></button>

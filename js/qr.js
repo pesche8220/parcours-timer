@@ -86,7 +86,12 @@ export class Scanner {
         const scale = Math.min(1, 900 / Math.max(v.videoWidth, v.videoHeight));
         const w = Math.round(v.videoWidth * scale), h = Math.round(v.videoHeight * scale);
         if (this.canvas.width !== w) { this.canvas.width = w; this.canvas.height = h; }
+        // Abwechselnd mit leichtem Weichzeichner: glättet Kamerarauschen (z. B. in der Dämmerung).
+        // Im Test verbesserte das die Erkennung verrauschter Bilder deutlich.
+        this.n = (this.n || 0) + 1;
+        this.ctx2d.filter = this.n % 2 ? 'blur(1.2px)' : 'none';
         this.ctx2d.drawImage(v, 0, 0, w, h);
+        this.ctx2d.filter = 'none';
         const img = this.ctx2d.getImageData(0, 0, w, h);
         this.worker.postMessage({ buf: img.data.buffer, w, h }, [img.data.buffer]);
       }

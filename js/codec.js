@@ -44,13 +44,13 @@ export function parseCode(text) {
   text = String(text).trim();
   if (text.startsWith('PT1:')) {
     const p = text.slice(4);
-    return { kind: p.startsWith('a~') ? 'answer' : p.startsWith('o~') ? 'offer' : 'unknown', data: p };
+    return { kind: /^a[~.]/.test(p) ? 'answer' : p.startsWith('o~') ? 'offer' : 'unknown', data: p };
   }
   const h = text.indexOf('#');
   const frag = h >= 0 ? text.slice(h + 1) : text;
   if (frag.startsWith('c=')) {
     const p = decodeURIComponent(frag.slice(2));
-    return { kind: p.startsWith('o~') ? 'offer' : p.startsWith('a~') ? 'answer' : 'unknown', data: p };
+    return { kind: p.startsWith('o~') ? 'offer' : /^a[~.]/.test(p) ? 'answer' : 'unknown', data: p };
   }
   if (frag.startsWith('w=')) {
     try { return { kind: 'workout', data: decodeWorkout(frag.slice(2)) }; }

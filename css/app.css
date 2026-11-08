@@ -232,7 +232,7 @@ svg { display: block; }
 .play svg { width: 24px; height: 24px; margin-left: 2px; }
 .empty { padding: 22px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line-2); border-radius: var(--r-lg); list-style: none; }
 
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .tile {
   display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; gap: 4px 12px; align-items: center; text-align: left;
   padding: 14px 16px; border-radius: var(--r-lg); background: var(--surface); border: 1.5px solid var(--line); transition: border-color .15s;
@@ -241,7 +241,8 @@ svg { display: block; }
 .tile-ico { width: 36px; height: 36px; border-radius: 11px; background: var(--surface-2); display: grid; place-items: center; }
 .tile-ico svg { width: 22px; height: 22px; }
 .tile-label { font-weight: 700; font-size: .9rem; color: var(--muted); }
-.tile-val { grid-column: 1 / -1; font: 700 1.75rem/1 var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tile-val { grid-column: 1 / -1; font: 700 clamp(1.35rem, 6.6vw, 1.75rem)/1 var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tile { min-width: 0; }
 
 .screen-card { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-xl); padding: 18px; display: grid; grid-template-columns: 110px 1fr; gap: 14px 16px; align-items: center; }
 .screen-art { color: var(--ink); }
