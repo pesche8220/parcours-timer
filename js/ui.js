@@ -38,7 +38,7 @@ export function sheet({ title = '', body = '', cls = '', onMount, onClose, label
 }
 
 let toastTimer = null;
-export function toast(msg, { ms = 2600, action, onAction } = {}) {
+export function toast(msg, { ms = 2600, action, onAction, sticky = false } = {}) {
   let t = document.getElementById('toast');
   if (!t) {
     t = document.createElement('div');
@@ -52,7 +52,7 @@ export function toast(msg, { ms = 2600, action, onAction } = {}) {
   t.classList.add('show');
   clearTimeout(toastTimer);
   const hide = () => t.classList.remove('show');
-  toastTimer = setTimeout(hide, action ? Math.max(ms, 6000) : ms);
+  if (!sticky) toastTimer = setTimeout(hide, action ? Math.max(ms, 6000) : ms);
 }
 
 /** Erster Tipp schärft den Knopf («Sicher?»), zweiter führt aus. */

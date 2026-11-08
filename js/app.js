@@ -41,7 +41,7 @@ handleHash();
 window.addEventListener('hashchange', handleHash);
 
 registerSW(() => {
-  const show = () => toast('Neue Version verfügbar', { action: 'Neu laden', onAction: applyUpdate });
+  const show = () => toast('Neue Version verfügbar', { action: 'Neu laden', onAction: applyUpdate, sticky: true });
   if (isRunning()) {
     const off = onRunEvent(t => { if (t === 'exit') { off(); show(); } });
   } else show();

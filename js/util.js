@@ -71,5 +71,8 @@ export function appBase() {
 }
 
 export function vibrate(ms) {
-  try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { /* egal */ }
+  try {
+    // Nur nach einem echten Tipp erlaubt – sonst meckert der Browser in der Konsole
+    if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(ms);
+  } catch (e) { /* egal */ }
 }

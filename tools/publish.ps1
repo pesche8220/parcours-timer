@@ -1,4 +1,4 @@
-# Veröffentlicht den aktuellen Commit auf GitHub; GitHub Pages aktualisiert sich danach automatisch (1–2 min).
+﻿# Veröffentlicht den aktuellen Commit auf GitHub; GitHub Pages aktualisiert sich danach automatisch (1–2 min).
 # Start: powershell -ExecutionPolicy Bypass -File tools/publish.ps1
 # Nutzt die Anmeldung der GitHub-CLI (gh auth login). Das Token wird weder angezeigt noch gespeichert.
 $git = "$env:LOCALAPPDATA\Programs\MinGit\cmd\git.exe"
