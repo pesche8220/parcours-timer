@@ -4,9 +4,10 @@
 //
 // Ablauf: Anzeige erstellt Angebot (QR) -> Handy scannt, erstellt Antwort (QR) -> Anzeige scannt -> verbunden.
 import { b64urlFromBytes, bytesFromB64url } from './util.js';
+import { lnaState } from './lna.js';
 
 const CFG = { iceServers: [] };
-const OPEN_TIMEOUT = 15000;
+const OPEN_TIMEOUT = 25000;   // ab dem Moment, in dem die Anzeige die Antwort gelesen hat
 
 let pc = null, dc = null;
 let role = null;          // 'display' | 'remote'
@@ -18,6 +19,9 @@ function emit(ev) { listeners.forEach(fn => { try { fn(ev); } catch (e) { consol
 function setStatus(s) {
   if (status === s) return;
   status = s;
+  // Während des Verbindens laufend mitschreiben (Diagnose + «Gegenseite hat gelesen»)
+  clearInterval(sampleTimer);
+  if (s === 'connecting' && pc) { const myPc = pc; sampleTimer = setInterval(() => samplePairs(myPc), 1000); }
   emit({ type: 'status', status: s, role });
 }
 
@@ -109,16 +113,76 @@ function gathered(conn, ms = 2500) {
 
 /* ---------- Verbindung ---------- */
 function reset() {
-  clearInterval(hbTimer); clearTimeout(openTimer);
+  clearInterval(hbTimer); clearTimeout(openTimer); clearInterval(sampleTimer);
   try { dc && dc.close(); } catch (e) { /* egal */ }
   try { pc && pc.close(); } catch (e) { /* egal */ }
   pc = null; dc = null;
 }
 
+/* ---------- Diagnose: was ist bei einem Fehlschlag passiert? ---------- */
+let diag = { local: '', remote: '', ice: [] };
+// 4 = private IPv4, p = öffentliche IPv4, 6 = IPv6, m = verschleierte Adresse (.local)
+const kindOf = a => a.endsWith('.local') ? 'm' : a.includes(':') ? '6' : /^(10|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(a) ? '4' : 'p';
+const kinds = list => list.map(c => kindOf(c.addr)).join('') || '-';
+const hasIp = s => /[46p]/.test(s);
+
+function browserTag() {
+  const ua = navigator.userAgent;
+  const os = /Android/.test(ua) ? 'And' : /iPhone|iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 'iOS' : /Windows/.test(ua) ? 'Win' : /Mac/.test(ua) ? 'Mac' : 'X';
+  const m = ua.match(/(Edg|Chrome|Firefox|Version)\/(\d+)/);
+  const br = m ? ({ Edg: 'E', Chrome: 'C', Firefox: 'F', Version: 'S' })[m[1]] + m[2] : '?';
+  return os + '-' + br;
+}
+
+/** Liefert { code, hint } – Code zum Weitergeben, Hinweis in Klartext */
+async function diagnose() {
+  const lna = await lnaState();
+  await samplePairs(pc);
+  const { n, ok, bad } = diag.pairs;
+  const code = [role === 'display' ? 'A' : 'H', 'L' + diag.local, 'R' + diag.remote, 'I' + (diag.ice.join('>') || '-'),
+    `P${n}/${ok}/${bad}`, 'N' + lna.slice(0, 3), browserTag()].join(' ');
+  const tried = n > 0 || diag.ice.includes('chec');
+  let hint;
+  if (lna === 'denied') hint = 'Chrome blockiert den Zugriff aufs lokale Netzwerk. Symbol links in der Adresszeile → Website-Einstellungen → «Lokales Netzwerk» zulassen.';
+  else if (diag.remote && !hasIp(diag.local) && !hasIp(diag.remote)) hint = 'Beide Geräte verstecken ihre Netzwerkadresse. Erlaube die Kamera dauerhaft («Immer erlauben») auf beiden Geräten und verbinde neu.';
+  else if (!diag.remote || !tried) hint = role === 'remote' ? 'Die Anzeige hat sich noch nicht gemeldet. Hat sie deinen Code gelesen (Piep)?' : 'Es kam kein Verbindungsversuch zustande.';
+  else if (ok === 0) hint = 'Die Geräte finden sich im Netz nicht. Sind beide im selben WLAN oder Hotspot? Manche WLANs (z. B. Gast-WLAN) trennen Geräte voneinander.';
+  else hint = 'Verbindung kam nicht zustande.';
+  return { code, hint, lna };
+}
+
+/** Verbindungsversuche zählen – Chrome räumt sie nach dem Scheitern weg, darum laufend mitschreiben */
+async function samplePairs(conn) {
+  if (!conn) return;
+  try {
+    let n = 0, ok = 0, bad = 0, rx = 0;
+    (await conn.getStats()).forEach(r => {
+      if (r.type !== 'candidate-pair') return;
+      n++;
+      rx += r.requestsReceived || 0;
+      if (r.state === 'succeeded') ok++; else if (r.state === 'failed') bad++;
+    });
+    const p = diag.pairs;
+    diag.pairs = { n: Math.max(p.n, n), ok: Math.max(p.ok, ok), bad: Math.max(p.bad, bad) };
+    // Erste Anfrage der Gegenseite: Sie hat unseren Code und versucht sich zu verbinden
+    if (rx > 0 && !diag.peerSeen && conn === pc) { diag.peerSeen = true; emit({ type: 'peerseen', role }); }
+  } catch (e) { /* egal */ }
+}
+
+let sampleTimer = null;
 function makePc() {
   pc = new RTCPeerConnection(CFG);
   dc = pc.createDataChannel('pt', { negotiated: true, id: 0, ordered: true });
   const myPc = pc;
+  diag = { local: '', remote: '', ice: [], pairs: { n: 0, ok: 0, bad: 0 } };
+  clearInterval(sampleTimer);
+  pc.oniceconnectionstatechange = () => {
+    if (pc !== myPc) return;
+    const s = myPc.iceConnectionState;
+    diag.ice.push(s.slice(0, 4));
+    samplePairs(myPc);
+    emit({ type: 'ice', state: s, role });
+  };
   dc.onopen = () => {
     clearTimeout(openTimer);
     lastRx = Date.now();
@@ -158,6 +222,8 @@ export const link = {
   get status() { return status; },
   get open() { return status === 'open'; },
   get active() { return status === 'open' || status === 'lost'; },
+  /** true, wenn dieses Gerät eine echte Netzwerkadresse in seinen Code geschrieben hat */
+  get exposesIp() { return hasIp(diag.local); },
 
   on(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
@@ -170,7 +236,9 @@ export const link = {
     await myPc.setLocalDescription(await myPc.createOffer());
     await gathered(myPc);
     if (pc !== myPc) throw new Error('abgebrochen');
-    hostUfrag = parseSdp(myPc.localDescription.sdp).u;
+    const local = parseSdp(myPc.localDescription.sdp);
+    hostUfrag = local.u;
+    diag.local = kinds(local.c);
     setStatus('waiting');
     return encodeDesc('o', myPc.localDescription.sdp);
   },
@@ -182,11 +250,14 @@ export const link = {
     reset();
     role = 'remote';
     makePc();
+    diag.remote = kinds(d.c);
     await pc.setRemoteDescription({ type: 'offer', sdp: buildSdp(d) });
     await pc.setLocalDescription(await pc.createAnswer());
     await gathered(pc);
+    diag.local = kinds(parseSdp(pc.localDescription.sdp).c);
+    // Keine Frist hier: Das Handy weiss nicht, wann die Anzeige seinen Code liest.
+    // Scheitert die Verbindung wirklich, meldet das der Browser (connectionState «failed»).
     setStatus('connecting');
-    armTimeout();
     return encodeDesc('a.' + d.u, pc.localDescription.sdp);
   },
 
@@ -200,12 +271,14 @@ export const link = {
     if (d.kind !== 'a') throw fail('kind');
     if (!pc || role !== 'display' || status !== 'waiting' || pc.signalingState !== 'have-local-offer') throw fail('notready');
     if (d.tag && d.tag !== hostUfrag) throw fail('stale');
+    diag.remote = kinds(d.c);
     await pc.setRemoteDescription({ type: 'answer', sdp: buildSdp(d) });
     setStatus('connecting');
     armTimeout();
   },
 
   send,
+  diagnose,
 
   close() {
     if (dc && dc.readyState === 'open') { try { dc.send(JSON.stringify({ t: 'bye' })); } catch (e) { /* egal */ } }

@@ -1,5 +1,5 @@
 // Installierbarkeit und Service Worker (Offline-Betrieb, Updates).
-export const APP_VERSION = '1.0.3';
+export const APP_VERSION = '1.0.4';
 
 let deferred = null, updateReg = null, wantReload = false;
 const listeners = new Set();

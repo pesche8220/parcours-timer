@@ -1,7 +1,7 @@
 // Service Worker: legt beim ersten Besuch alle Dateien ab, danach läuft die App komplett offline.
 // WICHTIG: Bei jeder Änderung VERSION erhöhen (gleich wie APP_VERSION in js/pwa.js),
 // sonst bekommen installierte Geräte die neue Fassung nicht.
-const VERSION = '1.0.3';
+const VERSION = '1.0.4';
 const CACHE = 'parcours-' + VERSION;
 
 const ASSETS = [
@@ -9,7 +9,7 @@ const ASSETS = [
   'index.html',
   'manifest.webmanifest',
   'css/app.css',
-  'js/app.js', 'js/codec.js', 'js/display.js', 'js/generator.js', 'js/icons.js', 'js/launch.js',
+  'js/app.js', 'js/codec.js', 'js/display.js', 'js/generator.js', 'js/icons.js', 'js/launch.js', 'js/lna.js',
   'js/library.js', 'js/link.js', 'js/nav.js', 'js/pwa.js', 'js/qr.js', 'js/qr-worker.js', 'js/runner.js',
   'js/segments.js', 'js/sound.js', 'js/store.js', 'js/theme.js', 'js/ui.js', 'js/util.js', 'js/wake.js',
   'js/views/editor.js', 'js/views/home.js', 'js/views/pair.js', 'js/views/preview.js', 'js/views/ready.js',

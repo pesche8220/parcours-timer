@@ -50,6 +50,13 @@ tools/make-icons.ps1  PNG-Icons erzeugen (System.Drawing)
 - Die Anzeige ist der Chef: läuft weiter, wenn das Handy weg ist. Heartbeat alle 2 s, «getrennt» nach 7 s Funkstille.
 - Ganz ohne Netz: Workout-QR (`#w=…`) auf die Anzeige halten → läuft dort, ohne Fernbedienung.
 - Antwort-Code beginnt mit `a.<ufrag der Anzeige>`: Die Anzeige verwirft alte/fremde Antworten (sonst blockierte sie).
+- **Wichtigste Erkenntnis:** Verbindung klappt zuverlässig nur mit echten IP-Adressen in den Codes. Chrome schreibt diese nur,
+  wenn die Seite Kamera- (oder Mikrofon-)Erlaubnis hat; sonst `.local`-Namen, deren Auflösung unzuverlässig ist
+  (im Test: echte Adresse 13 ms, `.local` gar nicht). Darum läuft die Kamera immer, bevor eine Verbindung erzeugt wird.
+- Diagnose-Code bei Fehlern (z. B. `A L4m R4 Ichec>disc P2/0/2 Ngra And-C147`): A/H = Anzeige/Handy ·
+  L/R = Adressarten eigene/Gegenseite (4 private IPv4, p öffentliche IPv4, 6 IPv6, m `.local`, - keine) ·
+  I = ICE-Verlauf · P = Versuche gesamt/erfolgreich/gescheitert · N = Berechtigung «lokales Netzwerk» · Gerät-Browser+Version.
+  Nur `m` auf beiden Seiten → Kamera-Erlaubnis fehlt. P>0, 0 erfolgreich → Geräte erreichen sich nicht (Netz/Isolation).
 - Testen ohne Kamera (zwei Browser-Tabs): `__pt.qr()` liefert den zuletzt gezeigten QR-Text, `__pt.scan(text)` simuliert einen Scan.
   Realistischer: Inhalt von `tools/fakecam.js` in die Konsole einfügen, dann `__fake.text = '<QR-Text>'` – ersetzt die Kamera
   durch ein schräges, unscharfes, verrauschtes Bild und testet so die ganze Scan-Kette.
