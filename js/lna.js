@@ -32,7 +32,7 @@ export async function requestLna() {
 
 /** Kurzer Text für die Oberfläche, oder '' wenn nichts zu tun ist */
 export function lnaHelp(state) {
-  if (state === 'denied') return 'Chrome blockiert für diese Seite den Zugriff aufs lokale Netzwerk. Tippe auf das Symbol links in der Adresszeile → Website-Einstellungen → «Lokales Netzwerk» auf «Zulassen» stellen, dann neu verbinden.';
-  if (state === 'prompt') return 'Chrome braucht einmal deine Erlaubnis, damit die Geräte sich im lokalen Netz finden.';
+  if (state === 'denied') return 'Chrome hat den Zugriff aufs lokale Netzwerk für diese Seite gesperrt. Klappt die Verbindung nicht: Symbol links in der Adresszeile → Website-Einstellungen → «Lokales Netzwerk» auf «Zulassen» stellen.';
+  if (state === 'prompt') return 'Damit sich die Geräte sicher finden, kann Chrome einmal nach dem lokalen Netzwerk fragen.';
   return '';
 }

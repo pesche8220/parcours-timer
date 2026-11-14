@@ -1,7 +1,7 @@
 // Service Worker: legt beim ersten Besuch alle Dateien ab, danach läuft die App komplett offline.
 // WICHTIG: Bei jeder Änderung VERSION erhöhen (gleich wie APP_VERSION in js/pwa.js),
 // sonst bekommen installierte Geräte die neue Fassung nicht.
-const VERSION = '1.0.4';
+const VERSION = '1.0.5';
 const CACHE = 'parcours-' + VERSION;
 
 const ASSETS = [

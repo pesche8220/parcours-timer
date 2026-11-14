@@ -143,11 +143,12 @@ async function diagnose() {
     `P${n}/${ok}/${bad}`, 'N' + lna.slice(0, 3), browserTag()].join(' ');
   const tried = n > 0 || diag.ice.includes('chec');
   let hint;
-  if (lna === 'denied') hint = 'Chrome blockiert den Zugriff aufs lokale Netzwerk. Symbol links in der Adresszeile → Website-Einstellungen → «Lokales Netzwerk» zulassen.';
-  else if (diag.remote && !hasIp(diag.local) && !hasIp(diag.remote)) hint = 'Beide Geräte verstecken ihre Netzwerkadresse. Erlaube die Kamera dauerhaft («Immer erlauben») auf beiden Geräten und verbinde neu.';
+  if (diag.remote && !hasIp(diag.local) && !hasIp(diag.remote)) hint = 'Beide Geräte verstecken ihre Netzwerkadresse. Erlaube die Kamera dauerhaft («Immer erlauben») auf beiden Geräten und verbinde neu.';
   else if (!diag.remote || !tried) hint = role === 'remote' ? 'Die Anzeige hat sich noch nicht gemeldet. Hat sie deinen Code gelesen (Piep)?' : 'Es kam kein Verbindungsversuch zustande.';
   else if (ok === 0) hint = 'Die Geräte finden sich im Netz nicht. Sind beide im selben WLAN oder Hotspot? Manche WLANs (z. B. Gast-WLAN) trennen Geräte voneinander.';
   else hint = 'Verbindung kam nicht zustande.';
+  // Gesperrtes lokales Netzwerk als möglichen Zusatzgrund nennen (in Tests blockierte es WebRTC nicht sicher)
+  if (lna === 'denied') hint += ' Zudem ist «Lokales Netzwerk» für diese Seite gesperrt: Symbol links in der Adresszeile → Website-Einstellungen → zulassen.';
   return { code, hint, lna };
 }
 

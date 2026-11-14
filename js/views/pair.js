@@ -66,7 +66,7 @@ pd.innerHTML = `
         <div class="qr-box" id="pdQr"><div class="qr-wait">Code wird erstellt …</div></div>
       </section>
       <section class="card pair-step">
-        <div class="step-head"><span class="step-num">2</span><p>Das Handy zeigt dann einen Code. Halte ihn <b>ca. 20 cm</b> vor die Kamera dieses Geräts. Ein Piep bestätigt, dass er gelesen wurde.</p></div>
+        <div class="step-head"><span class="step-num">2</span><p>Das Handy zeigt dann einen Code. Halte ihn <b>20–40 cm</b> vor die Kamera dieses Geräts und schau aufs Kamerabild: Sobald der Code scharf ist, piept es.</p></div>
         <div class="cam-box mirror"><video id="pdVid" muted playsinline></video><div class="cam-msg" id="pdCamMsg">Kamera wird gestartet …</div></div>
         <p class="fine">Die Kamera liest nur den Code. Es wird nichts gespeichert oder gesendet.</p>
       </section>
@@ -187,7 +187,7 @@ pr.innerHTML = `
       <button type="button" class="btn ghost wide" id="prNoNet">${UI.qr}<span>Kein gemeinsames Netz? Workout per Code übergeben</span></button>
     </div>
     <div id="prShow" hidden>
-      <p class="lead">Fast fertig: Halte jetzt den Bildschirm deines Handys ca. 20 cm vor die Kamera der Anzeige, bis sie piept. Tipp: Bildschirm hell stellen.</p>
+      <p class="lead">Fast fertig: Halte jetzt den Bildschirm deines Handys 20–40 cm vor die Kamera der Anzeige, bis sie piept. Ist der Code im Kamerabild der Anzeige unscharf, etwas weiter weg. Tipp: Bildschirm hell stellen.</p>
       <div class="qr-box big" id="prQr"></div>
       <div class="pair-status" id="prStatus" role="status">Warte auf die Anzeige …</div>
       <button type="button" class="btn ghost wide" id="prAgain">${UI.camera}<span>Nochmal scannen</span></button>
